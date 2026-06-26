@@ -1,0 +1,8 @@
+*.json
+*.jsonl
+*.txt
+*.docx
+test.py
+explorer.py
+extract_job_desc.py
+.venv
