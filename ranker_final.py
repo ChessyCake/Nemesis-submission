@@ -495,35 +495,41 @@ class EmbeddingSearch:
         self.svd = None
         self.embeddings = None
         self.query_embedding = None
-
+        
         try:
             from sentence_transformers import SentenceTransformer
+            # Load your local model
             self.sentence_model = SentenceTransformer('all-MiniLM-L6-v2')
             self.use_sentence_transformer = True
         except Exception:
             self.sentence_model = None
             self.use_sentence_transformer = False
-
+            
         if self.use_sentence_transformer:
-            self.embeddings = self.sentence_model.encode(
-                self.documents,
-                show_progress_bar=False,
-                convert_to_numpy=True
+            print("[SEMANTIC] Starting multi-process CPU pool...")
+            # 1. Fire up a worker pool for ALL your CPU cores
+            pool = self.sentence_model.start_multi_process_pool()
+            
+            # 2. Blast through the 61k documents in parallel batches
+            self.embeddings = self.sentence_model.encode_multi_process(
+                self.documents, 
+                pool,
+                batch_size=256
             )
-            self.query_embedding = self.sentence_model.encode(
-                [query_text],
-                show_progress_bar=False,
-                convert_to_numpy=True
-            )
+            
+            # 3. Shutdown the pool instantly to clear RAM overhead
+            self.sentence_model.stop_multi_process_pool(pool)
+            
+            self.query_embedding = self.sentence_model.encode([query_text], show_progress_bar=False, convert_to_numpy=True)
         else:
             self.vectorizer = TfidfVectorizer(**self.VECTORIZER_PARAMS)
             tfidf_matrix = self.vectorizer.fit_transform(self.documents)
             self.svd = TruncatedSVD(n_components=128, random_state=42)
             self.embeddings = self.svd.fit_transform(tfidf_matrix)
             self.query_embedding = self.svd.transform(self.vectorizer.transform([query_text]))
-
+            
         self.scores = self.compute_scores()
-    
+           
     @staticmethod
     def build_document_text(candidate: Dict) -> str:
         profile = candidate.get('profile', {})
@@ -545,8 +551,8 @@ class EmbeddingSearch:
                 parts.append(' '.join([f"{subkey}:{subvalue}" for subkey, subvalue in value.items()]))
             else:
                 parts.append(str(value))
-
-        return ' '.join(parts).strip()
+        text= ' '.join(parts).strip()
+        return text[:1200]
     
     def compute_scores(self) -> np.ndarray:
         similarity = cosine_similarity(self.embeddings, self.query_embedding).flatten()
@@ -634,13 +640,13 @@ class NeuralRanker:
     def __init__(self):
         self.scaler = StandardScaler()
         self.model = MLPRegressor(
-            hidden_layer_sizes=(128, 64),
+            hidden_layer_sizes=(64, 32),
             activation='relu',
             solver='adam',
-            max_iter=150,
+            max_iter=25,
             early_stopping=True,
             validation_fraction=0.1,
-            n_iter_no_change=10,
+            n_iter_no_change=3,
             random_state=42,
             verbose=False
         )
@@ -806,7 +812,7 @@ class CandidateRanker:
                 'target_score': target_score,
             })
 
-        self.feature_matrix = np.vstack(feature_rows)
+        self.feature_matrix = np.array(feature_rows, dtype=np.float32)
         self.target_scores = np.array(target_scores)
         self.neural_ranker = NeuralRanker()
         self.neural_ranker.fit(self.feature_matrix, self.target_scores)
