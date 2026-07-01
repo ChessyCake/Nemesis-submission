@@ -1,0 +1,19 @@
+submission:
+  team_name: "Nemesis"
+  primary_contact_name: "Hemakshi Agrawal"
+  primary_contact_email: "agrawalhemakshi@gmail.com"
+  primary_contact_phone: "+918169315779"
+  github_repository_url: "https://github.com/ChessyCake/Nemesis-submission"
+  sandbox_demo_link: ""
+  ai_tools_declared:
+    - "Gemini"
+    - "ChatGPT"
+  compute_environment_summary: "Windows CPU-only workspace HP probook, 16GB RAM, AMD Ryzen 5 220 @3.2GHz; local Python environment used for ranker development and validation."
+  team_members:
+    - name: "Harsh Raj Minj"
+      email: "h.rajminj@gmail.com"
+  methodology_summary: "Semantic candidate ranker with honeypot filtering and deterministic tie-breaking; uses sentence-transformers when available (if packages installed correctly), otherwise TF-IDF + SVD fallback."
+  submission_file: "submission.csv"
+  ranker_script: "ranker_final.py"
+  candidate_schema: "candidate_schema.json"
+  
