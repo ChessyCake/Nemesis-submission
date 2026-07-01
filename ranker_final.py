@@ -1,23 +1,3 @@
-"""
-Redrob Intelligent Candidate Discovery & Ranking Challenge - FINAL VERSION
-Production Ranker for Senior AI Engineer Role
-
-- Semantic search using sentence-transformer embeddings with TF-IDF+SVD fallback
-- Honeypot detection with 6 distinct trap patterns
-- Multi-criteria candidate ranking (semantic fit, JD fit, experience, engagement, skills)
-- Extended 3-4 line justifications with rich candidate data
-- Complete dataset validation and ID verification
-- Robust error handling for missing dependencies
-
-Constraints:
-- 5 minute execution time
-- 16GB memory  
-- CPU only, no network
-- Must keep honeypot rate < 10% in top 100
-
-Author: Advanced Ranking System
-"""
-
 import json
 import gzip
 import hashlib
@@ -28,12 +8,10 @@ from pathlib import Path
 from collections import defaultdict
 from typing import List, Dict, Tuple, Optional
 
-# ============================================================================
 # DEPENDENCY CHECK AND INSTALLATION
-# ============================================================================
+
 
 def check_and_install_dependencies():
-    """Check for required packages and install if missing"""
     required_packages = {
         'numpy': 'numpy',
         'sklearn': 'scikit-learn'
@@ -82,9 +60,8 @@ import warnings
 warnings.filterwarnings('ignore')
 
 
-# ============================================================================
 # SECTION 1: JOB DESCRIPTION ANALYZER
-# ============================================================================
+
 
 class JobDescriptionAnalyzer:
     """Extract and score candidates against the Senior AI Engineer JD"""
@@ -172,7 +149,7 @@ class JobDescriptionAnalyzer:
         keyword_score = 0.0
         matched_terms = []
         for term, weight in cls.JD_KEYWORD_WEIGHTS.items():
-            # \b ensures we match exact words (e.g., 'ml' won't trigger inside 'html')
+            # ensures we match exact words (e.g., 'ml' won't trigger inside 'html')
             if re.search(r'\b' + re.escape(term) + r'\b', full_text):
                 keyword_score += weight
                 matched_terms.append(term)
@@ -235,10 +212,7 @@ class JobDescriptionAnalyzer:
         
         return min(1.0, base_score), details
 
-
-# ============================================================================
 # SECTION 2: HONEYPOT DETECTION
-# ============================================================================
 
 class HoneypotDetector:
     """Detect fake/trap candidates in the dataset"""
@@ -317,9 +291,7 @@ class HoneypotDetector:
         return False, ""
 
 
-# ============================================================================
 # SECTION 3: ENGAGEMENT & AVAILABILITY SCORER
-# ============================================================================
 
 class EngagementScorer:
     """Score candidate engagement and availability"""
@@ -383,9 +355,7 @@ class EngagementScorer:
         return min(1.0, total), details
 
 
-# ============================================================================
 # SECTION 4: EXPERIENCE VALIDATOR
-# ============================================================================
 
 class ExperienceValidator:
     """Validate candidate's production ML experience"""
@@ -457,9 +427,7 @@ class ExperienceValidator:
         return final_score, details
 
 
-# ============================================================================
 # SECTION 5: SKILL ASSESSMENT SCORER
-# ============================================================================
 
 class SkillAssessmentScorer:
     """Score candidate's skill assessment results"""
@@ -491,9 +459,7 @@ class SkillAssessmentScorer:
         return 0.1
 
 
-# ============================================================================
 # SECTION 6: EMBEDDING & NEURAL RANKER
-# ============================================================================
 
 class EmbeddingSearch:
     """Build candidate embeddings and compute semantic similarity."""
@@ -607,7 +573,6 @@ class FeatureBuilder:
         profile = candidate.get('profile', {})
         signals = candidate.get('redrob_signals', {})
         career_history = candidate.get('career_history', [])
-        # --- NEW SCALED COMPONENT FIXES ---
         # 1. Map 0 to 15+ years of experience smoothly to a 0.0 - 1.0 scale
         yoe = min(1.0, float(profile.get('years_of_experience', 0)) / 15.0)
         
@@ -705,9 +670,8 @@ class NeuralRanker:
         return np.clip(preds, 0.0, 1.0)
 
 
-# ============================================================================
+
 # SECTION 7: MAIN RANKER ENGINE
-# ============================================================================
 
 class CandidateRanker:
     """Main production ranking system"""
@@ -777,7 +741,6 @@ class CandidateRanker:
             profile = candidate.get('profile', {})
             signals = candidate.get('redrob_signals', {})
             
-            # --- HARD RULES FOR INJECTED HONEYPOTS (like 0000165 / low activity traps) ---
             yoe = profile.get('years_of_experience', 0)
             views = signals.get('profile_views_received_30d', 0)
             apps = signals.get('applications_submitted_30d', 0)
@@ -835,7 +798,6 @@ class CandidateRanker:
 
         self.build_semantic_scores()
         
-        # --- NEW RRF COMPONENT MATCHING ---
         # 1. Rank everyone by semantic search alone
         candidates_by_semantic = sorted(
             range(len(self.candidates)), 
@@ -851,8 +813,7 @@ class CandidateRanker:
             reverse=True
         )
         jd_ranks = {orig_idx: rank for rank, orig_idx in enumerate(candidates_by_jd)}
-        # -----------------------------------
-
+   
         scored = []
         feature_rows = []
         target_scores = []
@@ -867,7 +828,6 @@ class CandidateRanker:
             experience, exp_details = ExperienceValidator.score(candidate)
             skill_assessment = SkillAssessmentScorer.score(candidate)
 
-            # --- NEW TARGET CALCULATION USING RRF POSITION ---
             s_rank = semantic_ranks.get(idx, len(self.candidates))
             j_rank = jd_ranks.get(idx, len(self.candidates))
             
@@ -1039,9 +999,7 @@ class CandidateRanker:
         print(f"[EXPORT] Exported {len(top_100)} candidates to {output_file}\n")
 
 
-# ============================================================================
 # SECTION 8: MAIN EXECUTION
-# ============================================================================
 
 def main():
     """Main execution pipeline"""
