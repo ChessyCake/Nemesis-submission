@@ -4,7 +4,7 @@ submission:
   primary_contact_email: "agrawalhemakshi@gmail.com"
   primary_contact_phone: "+918169315779"
   github_repository_url: "https://github.com/ChessyCake/Nemesis-submission"
-  sandbox_demo_link: ""
+  sandbox_demo_link: "https://huggingface.co/spaces/HarshRajMinj/nemesis"
   ai_tools_declared:
     - "Gemini"
     - "ChatGPT"

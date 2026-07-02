@@ -37,7 +37,6 @@ That command will:
 ## Files in this repo
 
 - `ranker_final.py` - ranking pipeline and CSV export
-- `candidate_schema.json` - candidate data schema
 - `submission_metdata.yaml` - portal metadata for the submission
 - `submission.csv` - generated submission file
 
